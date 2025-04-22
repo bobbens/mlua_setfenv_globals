@@ -1,6 +1,11 @@
+const ENV: &str = "_ENV"; /// Variable we use for Lua environments
+
 pub struct Lua {
+    ///< The true Lua environment
     lua: mlua::Lua,
+    /// Our globals, these can be masked but not removed
     globals: mlua::Table,
+    /// The metatable for environments, just defaults to our globals
     env_mt: mlua::Table,
 }
 impl Lua {
@@ -26,17 +31,17 @@ impl Lua {
         let wrapped = lua.globals();
         let wrapped_mt = lua.create_table()?;
         wrapped_mt.set( "__index", lua.create_function( |lua, (t, k): (mlua::Table, mlua::Value)| -> mlua::Result<mlua::Value> {
-            let env_str = lua.create_string("_ENV")?;
+            let env_str = lua.create_string(ENV)?;
             match k == mlua::Value::String(env_str) {
                 true => t.raw_get( k ),
                 false => {
-                    let e: mlua::Table = t.raw_get("_ENV")?;
+                    let e: mlua::Table = t.raw_get(ENV)?;
                     e.get(k)
                 },
             }
         } )?)?;
         wrapped_mt.set( "__newindex",lua.create_function( |_, (t, k, v): (mlua::Table, mlua::Value, mlua::Value)| -> mlua::Result<()> {
-            let e: mlua::Table = t.raw_get("_ENV")?;
+            let e: mlua::Table = t.raw_get(ENV)?;
             e.set(k, v)
         } )?)?;
         wrapped.set_metatable( Some(wrapped_mt) );
@@ -53,6 +58,7 @@ impl Lua {
 }
 
 pub struct Env {
+    /// Just a simple wrapper for now
     table: mlua::Table,
 }
 impl Env {
@@ -63,7 +69,7 @@ impl Env {
     }
 
     pub fn set( &self, lua: &Lua ) -> mlua::Result<()> {
-        lua.lua.globals().raw_set( "_ENV", self.table.clone() )
+        lua.lua.globals().raw_set( ENV, self.table.clone() )
     }
 }
 
