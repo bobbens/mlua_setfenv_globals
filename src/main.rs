@@ -1,7 +1,8 @@
 const ENV: &str = "_ENV"; /// Variable we use for Lua environments
 
+/// Wrapper for Lua environment that can create environments
 pub struct Lua {
-    ///< The true Lua environment
+    /// The true Lua environment
     lua: mlua::Lua,
     /// Our globals, these can be masked but not removed
     globals: mlua::Table,
@@ -57,8 +58,8 @@ impl Lua {
     }
 }
 
+/// Just a simple wrapper for a Lua environment now
 pub struct Env {
-    /// Just a simple wrapper for now
     table: mlua::Table,
 }
 impl Env {
@@ -73,6 +74,7 @@ impl Env {
     }
 }
 
+/// Run tests with two environments
 fn main() -> mlua::Result<()> {
     let lua = Lua::new()?;
 
@@ -112,6 +114,14 @@ fn main() -> mlua::Result<()> {
     assert( notouchie == 1 )
     print('TEST4 OK')
     ").exec()?;
+
+    let globals = lua.lua.globals();
+    let cat: mlua::Integer = globals.get("cat")?;
+    assert!( cat==7 );
+    env2.set( &lua )?;
+    let cat: mlua::Integer = globals.get("cat")?;
+    assert!( cat==9 );
+    println!("TEST5 OK");
 
     Ok(())
 }
